@@ -181,5 +181,7 @@ sdf_nrow(fhvhv_data)
 #mismatch problems in the code. These will be fixed soon, but as a proof of concept yellow_data is up and running.
 sdf_schema(yellow_data)
 
-
+spark_write_parquet(yellow_data,
+                    path = paste0("persistent_data/yellow_data_final"),
+                    mode = "overwrite")
 

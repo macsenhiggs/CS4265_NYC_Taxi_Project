@@ -10,3 +10,9 @@ downloads/*
 #other local folders/files from apache
 metastore_db/*
 derby.log
+
+#keep directory for persistent data, but don't include any files
+persistent_data/*
+!persistent_data/
+
+README.html
