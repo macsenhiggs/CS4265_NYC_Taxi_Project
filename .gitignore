@@ -6,3 +6,7 @@
 
 #To prevent extremely large downloads
 downloads/*
+
+#other local folders/files from apache
+metastore_db/*
+derby.log
