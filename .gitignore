@@ -11,6 +11,9 @@ downloads/*
 metastore_db/*
 derby.log
 
+#exclude local html reports from knit Rmd files
+*.html
+
 #keep directory for persistent data, but don't include any files
 persistent_data/*
 !persistent_data/

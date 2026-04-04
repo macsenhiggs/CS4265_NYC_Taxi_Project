@@ -11,6 +11,12 @@ Initially designed using PySpark and AWS S3, the pipeline was pivoted to a hybri
 
 ## Setup Instructions (Dependencies)
 
+### If you do not have R and R Studio installed:
+
+-   Download R for your system [here](https://cran.r-project.org/)
+
+-   Download R Studio for your system [here](https://posit.co/download/rstudio-desktop/)
+
 To replicate this environment, you will need to install the following tools:
 
 1.  Java Development Kit (JDK): Java 17 is required to run a local Spark instance.
