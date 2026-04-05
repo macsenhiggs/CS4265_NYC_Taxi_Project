@@ -3,6 +3,7 @@
 .Rhistory
 .RData
 .Ruserdata
+.Renviron
 
 #To prevent extremely large downloads
 downloads/*
@@ -13,9 +14,8 @@ derby.log
 
 #exclude local html reports from knit Rmd files
 *.html
+#exclude any test sql queries made during development
+*.sql
 
-#keep directory for persistent data, but don't include any files
-persistent_data/*
-!persistent_data/
-
-README.html
+#ignore all files placed in ignore folder
+ignore/*

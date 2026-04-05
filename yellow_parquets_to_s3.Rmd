@@ -1,0 +1,129 @@
+---
+title: "yellow_parquets_to_s3"
+output: html_document
+---
+
+This file is not intended for use by regular users.
+It reads yellow taxi parquet data from the /downloads folder, homogenizes their schemas, processes them by adding some helper columns and removing other unnecessary ones, and writes them to S3 for later analysis so they are persistent.
+
+
+```{r}
+
+#Initialize Spark Session----
+if (exists("sc")) {
+  spark_disconnect(sc)
+}
+
+conf <- spark_config()
+
+#Sys.setenv("AWS_ACCESS_KEY_ID" = NULL) #access key goes here
+#Sys.setenv("AWS_SECRET_ACCESS_KEY" = NULL) #secret access key goes here
+Sys.setenv("AWS_DEFAULT_REGION" = "us-east-1")
+bucketlist()
+
+conf$spark.app.name <- "NYC Taxi"
+conf$spark.hadoop.fs.s3a.access.key <- Sys.getenv("AWS_ACCESS_KEY_ID")
+conf$spark.hadoop.fs.s3a.secret.key <- Sys.getenv("AWS_SECRET_ACCESS_KEY")
+conf$spark.hadoop.fs.s3a.endpoint <- "s3.amazonaws.com"
+conf$spark.hadoop.fs.s3a.impl <- "org.apache.hadoop.fs.s3a.S3AFileSystem"
+
+conf$spark.sql.parquet.enableVectorizedReader <- "false"
+conf$`sparklyr.shell.driver-memory` <- "5G"
+conf$spark.driver.memory <- "5G"
+conf$spark.driver.maxResultSize <- "4G"
+
+
+sc <- spark_connect(master = "local", version = "3.5.0", config = conf)
+```
+
+```{r}
+yellow_schema <- list(
+  VendorID              = "integer64",
+  tpep_pickup_datetime  = "timestamp",
+  tpep_dropoff_datetime = "timestamp",
+  passenger_count       = "integer64",
+  trip_distance         = "double",
+  RatecodeID            = "integer64",
+  store_and_fwd_flag    = "character",
+  PULocationID          = "integer64",
+  DOLocationID          = "integer64",
+  payment_type          = "integer64",
+  fare_amount           = "double",
+  extra                 = "double",
+  mta_tax               = "double",
+  tip_amount            = "double",
+  tolls_amount          = "double",
+  #improvement_surcharge = "double",
+  total_amount          = "double"
+  #Airport_fee           = "double",
+  #congestion_surcharge  = "double",
+  #cbd_congestion_fee    = "double",
+)
+```
+
+```{r}
+wd <- getwd()
+downloads_path <- paste0(wd, "/downloads")
+
+yellow_files <- list.files(
+  path = downloads_path, 
+  pattern = "^yellow_tripdata_.*\\.parquet$", 
+  full.names = TRUE
+)
+
+
+for (i in seq_along(yellow_files)) {
+  current_file <- yellow_files[i]
+  message("--- Processing File ", i, " of ", length(yellow_files), " ---")
+  file_name <- basename(current_file)
+  message("File: ", file_name)
+  
+  temp_yellow <- spark_read_parquet(
+    sc = sc,
+    name = "current_chunk", # Reuse the same name to overwrite the pointer in Spark
+    path = paste0("file://", current_file),
+    #columns = yellow_schema,
+    options = list(mergeSchema = "true"),
+    memory = FALSE,
+    overwrite = TRUE
+  ) |>
+    mutate(
+      across(where(is.numeric), as.numeric)
+  )
+  
+  processed_chunk <- temp_yellow |>
+    mutate(
+      VendorID = as.numeric(VendorID),
+      year  = year(tpep_pickup_datetime),
+      month = month(tpep_pickup_datetime),
+      total_fees = total_amount - (fare_amount + tip_amount)
+    ) |>
+    select(-any_of(c(
+      "RatecodeID",
+      "store_and_fwd_flag",
+      "extra",
+      "mta_tax",
+      "tolls_amount"
+    ))) |>
+    # Add a safety filter to ensure year/month exist and year is valid
+    filter(
+      !is.na(year),
+      !is.na(month),
+      year >= 2015,
+      year <= 2025
+      )
+  
+  spark_write_parquet(
+    x = processed_chunk,
+    path = s3_output_path,
+    mode = "append", 
+    #partition_by = c("year", "month")
+  )
+  
+  #move file to different folder so it is not re-processed if interruption occurs
+  file.rename(current_file, paste0(wd, "/downloads/processed/", file_name))
+  
+  dbExecute(sc, "DROP VIEW IF EXISTS current_chunk")
+}
+
+```

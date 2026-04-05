@@ -3,65 +3,119 @@ title: "Project Setup"
 output: html_document
 ---
 
+
+
 ```{r}
-#Check if java 17 is installed and, if not, give instructions on how to do so for user's OS.
+# 1. Configuration & Detection
 os <- Sys.info()[["sysname"]]
 
-check_java <- function() {
-  java_version_out <- tryCatch(
-    system2("java", "-version", stdout = TRUE, stderr = TRUE),
+check_java_version <- function(path = "java") {
+  # Runs 'java -version' on a specific path or the default 'java'
+  cmd <- if(path == "java") "java" else file.path(path, "bin", "java")
+  
+  ver_out <- tryCatch(
+    system2(cmd, "-version", stdout = TRUE, stderr = TRUE),
     error = function(e) return(NULL)
   )
-  if (is.null(java_version_out)) return("None")
-  return(java_version_out[1])
+  if (is.null(ver_out) || length(ver_out) == 0) return("None")
+  return(ver_out[1])
 }
 
-current_version <- check_java()
-is_java_17 <- grepl("17\\.", current_version)
+# Check what the system is currently using
+current_system_java <- check_java_version()
+is_already_on_17 <- grepl("17\\.", current_system_java)
+
+# 2. The "Strict" Discovery Function
+detect_java_17 <- function() {
+  found_path <- NULL
+  
+  if (os == "Darwin") {
+    # Check if java_home can actually find 17
+    # Use '2>/dev/null' to suppress the fallback behavior in some shell environments
+    found_path <- tryCatch(
+      system("/usr/libexec/java_home -v 17 2>/dev/null", intern = TRUE),
+      error = function(e) return(NULL)
+    )
+  } else if (os == "Windows") {
+    p <- "C:/Program Files/Java/jdk-17"
+    if (dir.exists(p)) found_path <- p
+  } else {
+    p <- "/usr/lib/jvm/java-17-openjdk-amd64"
+    if (dir.exists(p)) found_path <- p
+  }
+  
+  # VALIDATION: Only return the path if it actually leads to Java 17
+  if (!is.null(found_path) && length(found_path) > 0) {
+    # On Mac, java_home returns the full path including /Contents/Home
+    if (grepl("17", found_path)) return(found_path)
+  }
+  return(NULL)
+}
+
+# 3. Decision Logic
+java_17_path <- detect_java_17()
 
 cat("--- JAVA DIAGNOSTIC ---\n")
 cat("Operating System:", os, "\n")
-cat("Detected Java:  ", current_version, "\n\n")
+cat("System Default:  ", current_system_java, "\n")
 
-if (!is_java_17) {
-  cat("You are already on Java 17. You are good to go for Spark!")
-} else {
-  cat("Java 17 not detected. Please run the following command in your terminal:\n\n")
+if (!is.null(java_17_path)) {
+  # found 17 somewhere, even if it's not the system default
+  Sys.setenv(JAVA_HOME = java_17_path)
+  cat("SUCCESS: Java 17 found and JAVA_HOME set to:\n", java_17_path, "\n")
   
-  if (os == "Darwin") { # macOS
-    cat("Using Homebrew:\n")
-    cat("brew install openjdk@17\n")
-    cat("sudo ln -sfn /usr/local/opt/openjdk@17/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk\n")
-    cat("\nNote: if you do not have homebrew installed you can download it here:\n")
-    cat("https://github.com/Homebrew/brew/releases\n")
-    cat("or by using the following shell prompt:\n")
-    cat("/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"\n")
-    
-  } else if (os == "Linux") {
-    cat("Using Apt (Ubuntu/Debian):\n")
-    cat("sudo apt update && sudo apt install openjdk-17-jdk")
-    
-  } else if (os == "Windows") {
-    cat("Using Winget (Run in PowerShell):\n")
-    cat("winget install Oracle.JDK.17\n\n")
-    cat("Or download the MSI installer here:\n")
-    cat("[https://www.oracle.com/java/technologies/downloads/#java17](https://www.oracle.com/java/technologies/downloads/#java17)")
+  if (!is_already_on_17) {
+    cat("Note: Your system default is different, but Spark will use Java 17.\n")
   }
+  
+} else {
+  # cannot find Java 17 anywhere
+  cat("ERROR: Java 17 not found on this machine.\n\n")
+  cat("Please run the following in your terminal to install it:\n")
+  
+  choice <- askYesNo("Would you like to attempt to install OpenJDK 17 automatically?")
+  
+  if (isTRUE(choice)) {
+    if (os == "Darwin") {
+      system("brew install openjdk@17")
+      
+      #This step must be performed by the user because of sudo permissions
+      cat("\nSuccess! Now, please copy-paste this into your Terminal to finish:\n")
+      cat("sudo ln -sfn /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk\n")
+      
+    } else if (os == "Windows") {
+      system("winget install Oracle.JDK.17")
+      
+    } else {
+      #This step must be performed by the user because of sudo permissions
+      cat("Please run: sudo apt install openjdk-17-jdk\n")
+    }
+  } else {
+    cat("Installation cancelled. Please install Java 17 manually to proceed, then re-run this chunk once you have done so..")
+  }
+  
+  
 }
+  
+  
 
-#clear saved variables (no functionality for user)
-rm(list = ls())
+cat("\nFor Confirmation:\n")
+system("java -version")
 ```
+
 
 ```{r}
 #Install required libraries and instantiate them in environment
 if (!require(aws.s3)) install.packages("aws.s3") else message("S3 installed previously.")
 if (!require(sparklyr)) install.packages("sparklyr") else message("SparklyR installed previously.")
 if (!require(dplyr)) install.packages("dplyr") else message("dplyr installed previously.")
+if (!require(DBI)) install.packages("DBI") else message("DBI installed previously.")
+
 
 library(aws.s3)
 library(sparklyr)
 library(dplyr)
+library(DBI)
 message("Libraries successfully instantiated.")
 ```
 
@@ -73,3 +127,8 @@ if (nrow(spark_installed_versions() |> dplyr::filter(spark == "3.5.0")) == 0) {
   message("Spark 3.5 is already installed.")
 }
 ```
+```{r}
+#remove all setup variables
+rm(list = ls())
+```
+
