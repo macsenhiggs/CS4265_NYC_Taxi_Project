@@ -5,7 +5,8 @@ from pathlib import Path
 # --- Configuration ---
 DEST_DIR = Path("downloads")
 MAX_CONCURRENT_DOWNLOADS = 10 
-taxi_types = ["yellow", "green", "fhv", "fhvhv"]
+#taxi_types = ["yellow", "green", "fhv", "fhvhv"] #for data analytics on all four types
+taxi_types = ["yellow"] #scope restricted to yellow taxis for this project
 years = range(2015, 2026) 
 months = range(1, 13)
 
