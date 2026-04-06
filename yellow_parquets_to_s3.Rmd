@@ -97,13 +97,12 @@ for (i in seq_along(yellow_files)) {
       month = month(tpep_pickup_datetime),
       total_fees = total_amount - (fare_amount + tip_amount)
     ) |>
-    select(-any_of(c(
-      "RatecodeID",
-      "store_and_fwd_flag",
-      "extra",
-      "mta_tax",
-      "tolls_amount"
-    ))) |>
+    select(
+      vendorid, tpep_pickup_datetime, tpep_dropoff_datetime, 
+      passenger_count, trip_distance, pulocationid, dolocationid, 
+      payment_type, fare_amount, tip_amount, total_amount, 
+      year, month, total_fees
+    ) |>
     # Add a safety filter to ensure year/month exist and year is valid
     filter(
       !is.na(year),
