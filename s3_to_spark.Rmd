@@ -1,0 +1,73 @@
+---
+title: "S3_to_Spark"
+output: html_document
+---
+
+```{r}
+#Initialize Spark Session----
+if (exists("sc")) {
+  spark_disconnect(sc)
+}
+
+conf <- spark_config()
+conf$spark.app.name <- "NYC Taxi"
+conf$spark.hadoop.fs.s3a.endpoint <- "s3.amazonaws.com"
+conf$spark.hadoop.fs.s3a.impl <- "org.apache.hadoop.fs.s3a.S3AFileSystem"
+conf$spark.hadoop.fs.s3a.aws.credentials.provider <- "org.apache.hadoop.fs.s3a.AnonymousAWSCredentialsProvider"
+conf$spark.sql.parquet.enableVectorizedReader <- "false"
+
+sc <- spark_connect(master = "local", version = "3.5.0", config = conf)
+
+yellow_read_schema <- list(
+  # Original Columns (now forced to double)
+  VendorID              = "double",
+  tpep_pickup_datetime  = "timestamp",
+  tpep_dropoff_datetime = "timestamp",
+  passenger_count       = "double",
+  trip_distance         = "double",
+  PULocationID          = "double",
+  DOLocationID          = "double",
+  payment_type          = "double",
+  fare_amount           = "double",
+  tip_amount            = "double",
+  total_amount          = "double",
+  
+  # Engineered Columns (created in your loop)
+  year                  = "double",
+  month                 = "double",
+  total_fees            = "double"
+)
+```
+
+
+
+```{r}
+#main directory (all files)
+#s3_file_directory <- "s3a://cs4265-nyc-taxi-project/data/yellow_split/"
+
+#directory for much smaller set of test files (proof of concept)
+s3_file_directory <- "s3a://cs4265-nyc-taxi-project/data/yellow_test/" 
+
+yellow_s3_data <- spark_read_parquet(
+  sc = sc,
+  name = "yellow_s3_data",
+  path = s3_file_directory,
+  columns = yellow_read_schema,
+  options = list(mergeSchema = "false"),
+  memory = FALSE
+)
+
+#yellow_normalized <- yellow_s3_data |>
+#  mutate(
+#    # Ensure IDs are doubles (helpful for joins later)
+#    VendorID     = as.double(VendorID),
+#    PULocationID = as.double(PULocationID),
+#    DOLocationID = as.double(DOLocationID)
+#  )
+
+print(yellow_s3_data)
+```
+
+
+
+

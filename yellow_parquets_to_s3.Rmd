@@ -51,11 +51,11 @@ yellow_schema <- list(
   mta_tax               = "double",
   tip_amount            = "double",
   tolls_amount          = "double",
-  #improvement_surcharge = "double",
-  total_amount          = "double"
-  #Airport_fee           = "double",
-  #congestion_surcharge  = "double",
-  #cbd_congestion_fee    = "double",
+  improvement_surcharge = "double",
+  total_amount          = "double",
+  Airport_fee           = "double",
+  congestion_surcharge  = "double",
+  cbd_congestion_fee    = "double"
 )
 ```
 
@@ -69,7 +69,7 @@ yellow_files <- list.files(
   full.names = TRUE
 )
 
-s3_output_path <- "s3a://cs4265-nyc-taxi-project/data/yellow_data/"
+s3_output_path <- "s3a://cs4265-nyc-taxi-project/data/yellow_test/"
 
 for (i in seq_along(yellow_files)) {
   current_file <- yellow_files[i]
@@ -85,31 +85,27 @@ for (i in seq_along(yellow_files)) {
     options = list(mergeSchema = "true"),
     memory = FALSE,
     overwrite = TRUE
-  ) |>
-    mutate(
-      across(where(is.numeric), as.numeric)
   )
   
   processed_chunk <- temp_yellow |>
     mutate(
-      VendorID = as.numeric(VendorID),
-      year  = year(tpep_pickup_datetime),
-      month = month(tpep_pickup_datetime),
-      total_fees = total_amount - (fare_amount + tip_amount)
+      tpep_pickup_datetime  = to_timestamp(tpep_pickup_datetime),
+      tpep_dropoff_datetime = to_timestamp(tpep_dropoff_datetime),
+      year = as.double(year(tpep_pickup_datetime)),
+      month = as.double(month(tpep_pickup_datetime)),
+      total_fees = as.double(total_amount - (fare_amount + tip_amount))
+    ) |>
+    mutate(
+      across(where(is.numeric), as.double)
     ) |>
     select(
-      vendorid, tpep_pickup_datetime, tpep_dropoff_datetime, 
-      passenger_count, trip_distance, pulocationid, dolocationid, 
+      VendorID, tpep_pickup_datetime, tpep_dropoff_datetime, 
+      passenger_count, trip_distance, PULocationID, DOLocationID, 
       payment_type, fare_amount, tip_amount, total_amount, 
       year, month, total_fees
     ) |>
-    # Add a safety filter to ensure year/month exist and year is valid
-    filter(
-      !is.na(year),
-      !is.na(month),
-      year >= 2015,
-      year <= 2025
-      )
+    # Add a safety filter to ensure year exists and is logically valid
+    filter(!is.na(year), year >= 2015, year <= 2025)
   
   spark_write_parquet(
     x = processed_chunk,
