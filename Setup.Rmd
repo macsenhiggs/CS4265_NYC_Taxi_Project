@@ -132,7 +132,7 @@ message("Libraries successfully instantiated.")
 
 ```{r}
 if (nrow(spark_installed_versions() |> dplyr::filter(spark == "3.5.0")) == 0) {
-  spark_install(version = "3.5")
+  spark_install(version = "3.5.0")
     message("Spark 3.5 has been installed.")
 } else {
   message("Spark 3.5 is already installed.")
