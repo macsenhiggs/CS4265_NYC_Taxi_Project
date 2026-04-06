@@ -9,38 +9,25 @@ This project analyzes a decade of New York City Taxi and Limousine Commission (T
 
 Initially designed using PySpark and AWS S3, the pipeline was pivoted to a hybrid approach due to cloud permission constraints. It currently utilizes Python for automated data extraction from public HTTP endpoints and R (`sparklyr`) for large-scale data manipulation, schema enforcement, and analysis.
 
-## Setup Instructions (Dependencies)
+## Dependencies Setup Instructions
 
-### If you do not have R and R Studio installed:
+If you do not have R and R Studio installed:
 
 -   Download R for your system [here](https://cran.r-project.org/)
 
 -   Download R Studio for your system [here](https://posit.co/download/rstudio-desktop/)
 
-To replicate this environment, you will need to install the following tools:
+Once R and R Studio are installed, follow the instructions laid out in `Setup.Rmd` to set up the rest of the tools required for the project.
 
-1.  Java Development Kit (JDK): Java 17 is required to run a local Spark instance.
-2.  Python 3.x: Required to execute the data acquisition script.
-3.  R & RStudio: The primary environment for the Spark session.
-4.  R Packages: Open R and install the following dependencies: \`\`\`R install.packages(c("sparklyr", "dplyr"))
+-   This project requires your machine's JAVA_HOME directory to be set to an installation of Java 17, and chunk 1 in `Setup.Rmd` will systematically detect your operating system and assign a valid installation to the directory if it exists. If it does not exist, it will attempt to automatically install the language on your system (with user permission, barring sudo constraints)
+
+-   A handful of R libraries from the CRAN project are required for this project, and they will be automatically installed and instantiated in chunk 2 of `Setup.Rmd`
+
+-   Lastly, Spark requires a separate installation outside of the `sparklyr` library (which communicates with Spark but does not contain it), and running chunk 3 of `Setup.Rmd` will do so
 
 ## Environment Setup
 
-While the NYC TLC data is public and does not require API keys, you must configure your local environment so that R can locate your Java installation.
-
-1.  Find your Java 17 installation path (e.g., `/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home` on Mac or `C:\Program Files\Java\jdk-17` on Windows).
-
-2.  Create a file named `.Renviron` in the root of this project directory.
-
-3.  Add the following line to the `.Renviron` file, replacing the path with your own:
-
-    `JAVA_HOME="YOUR_JAVA_PATH_HERE"`
-
-## How to Run
-
-1.  Download parquet files by calling `python getParquets.py` in your terminal, which will save them in the `downloads` folder.
-2.  Open the `CS4265_NYC_Taxi_Project.Rproj` file to launch RStudio. This ensures your working directory and paths are correctly configured.
-3.  Save the DataFrames with Spark by running `main.R` in sequential order.
+While `getParquets.py` and `yellow_parquets_to_s3.Rmd` encompass the majority of code that has gone into the development thus far, their purpose is to serve as a pipeline from the Cloudfront-hosted parquet files provided by the TLC to lightly-processed parquet files stored in my personal S3 bucket. Given this single-use purpose, users have no need to run either file to access the data and can instead move directly into `s3_to_spark.Rmd` to pull the data from the S3 bucket and preview it themselves.
 
 ## What's Next
 

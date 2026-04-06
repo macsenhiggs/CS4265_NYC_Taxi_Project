@@ -16,8 +16,6 @@ if (exists("sc")) {
 
 conf <- spark_config()
 
-#Sys.setenv("AWS_ACCESS_KEY_ID" = NULL) #access key goes here
-#Sys.setenv("AWS_SECRET_ACCESS_KEY" = NULL) #secret access key goes here
 Sys.setenv("AWS_DEFAULT_REGION" = "us-east-1")
 bucketlist()
 
@@ -71,6 +69,7 @@ yellow_files <- list.files(
   full.names = TRUE
 )
 
+s3_output_path <- "s3a://cs4265-nyc-taxi-project/data/yellow_data/"
 
 for (i in seq_along(yellow_files)) {
   current_file <- yellow_files[i]
