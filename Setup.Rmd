@@ -71,12 +71,9 @@ if (!is.null(java_17_path)) {
 } else {
   # cannot find Java 17 anywhere
   cat("ERROR: Java 17 not found on this machine.\n\n")
-  cat("Please run the following in your terminal to install it:\n")
+  cat("Attempting to install...\n")
   
-  choice <- askYesNo("Would you like to attempt to install OpenJDK 17 automatically?")
-  
-  if (isTRUE(choice)) {
-    if (os == "Darwin") {
+  if (os == "Darwin") {
       system("brew install openjdk@17")
       
       #This step must be performed by the user because of sudo permissions
@@ -90,9 +87,6 @@ if (!is.null(java_17_path)) {
       #This step must be performed by the user because of sudo permissions
       cat("Please run: sudo apt install openjdk-17-jdk\n")
     }
-  } else {
-    cat("Installation cancelled. Please install Java 17 manually to proceed, then re-run this chunk once you have done so..")
-  }
   
   
 }
