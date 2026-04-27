@@ -19,7 +19,8 @@ conf$spark.sql.parquet.enableVectorizedReader <- "false"
 sc <- spark_connect(master = "local", version = "3.5.0", config = conf)
 
 yellow_read_schema <- list(
-  # Original Columns (now forced to double)
+  #Original Columns
+  #(forced to double when applicable)
   VendorID              = "double",
   tpep_pickup_datetime  = "timestamp",
   tpep_dropoff_datetime = "timestamp",
@@ -32,7 +33,8 @@ yellow_read_schema <- list(
   tip_amount            = "double",
   total_amount          = "double",
   
-  # Engineered Columns (created in your loop)
+  # Engineered Columns
+  #(created in loop)
   year                  = "double",
   month                 = "double",
   total_fees            = "double"
@@ -68,6 +70,44 @@ yellow_s3_data <- spark_read_parquet(
 print(yellow_s3_data)
 ```
 
+```{r}
+revenue_over_time <- yellow_s3_data |>
+  group_by(year) |>
+  summarize(
+    total_rev = sum(total_amount),
+    mean_rev = mean(total_amount),
+    n = n()
+  ) |>
+  sdf_register("revenue_over_time")
+
+tbl_cache(sc, "revenue_over_time")
+
+revenue_over_time <- revenue_over_time |> collect()
+
+```
 
 
+```{r}
+library(ggplot2)
+library(scales)
+
+rev_plot <- ggplot(revenue_over_time, aes(x = year, y = total_rev)) +
+  geom_bar(stat = "identity", fill = "gold") +
+  labs(
+    x = "Year",
+    y = "Total Revenue (USD)",
+    title = "Total Revenue of NYC Yellow Taxis by Year"
+  ) +
+  scale_y_continuous(labels = label_dollar()) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "black"),
+    text = element_text(color = "white"),
+    axis.text.x = element_text(color = "white"),
+    axis.text.y = element_text(color = "white"),
+    panel.grid = element_line(color = "gray15")
+  )
+  
+print(rev_plot)
+```
 
