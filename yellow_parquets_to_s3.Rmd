@@ -8,7 +8,6 @@ It reads yellow taxi parquet data from the /downloads folder, homogenizes their 
 
 
 ```{r}
-
 #Initialize Spark Session----
 if (exists("sc")) {
   spark_disconnect(sc)
@@ -79,7 +78,7 @@ for (i in seq_along(yellow_files)) {
   
   temp_yellow <- spark_read_parquet(
     sc = sc,
-    name = "current_chunk", # Reuse the same name to overwrite the pointer in Spark
+    name = "current_chunk",
     path = paste0("file://", current_file),
     #columns = yellow_schema,
     options = list(mergeSchema = "true"),
