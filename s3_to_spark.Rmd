@@ -67,7 +67,7 @@ yellow_s3_data <- spark_read_parquet(
 #    DOLocationID = as.double(DOLocationID)
 #  )
 
-print(yellow_s3_data)
+#print(yellow_s3_data)
 ```
 
 ```{r}
