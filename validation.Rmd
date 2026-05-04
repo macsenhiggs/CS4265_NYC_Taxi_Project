@@ -5,6 +5,7 @@ output:
   md_document:
     variant: markdown_github
 ---
+
 ```{r setup, include=FALSE}
 # include=FALSE prevents this setup code/warnings from showing in the final report
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
@@ -32,7 +33,7 @@ sc <- spark_connect(master = "local", version = "3.5.0", config = conf)
 
 ```
 
-```{r}
+```{r data pull, include=FALSE}
 
 yellow_read_schema <- list(
   #Original Columns
@@ -70,7 +71,8 @@ yellow_s3_data <- spark_read_parquet(
 ```
 
 
-```{r}
+```{r data quality, echo=FALSE}
+#Assessment of general data quality
 data_quality <- yellow_s3_data |>
   summarize(
     total_records = n(),
@@ -85,8 +87,8 @@ data_quality <- yellow_s3_data |>
 knitr::kable(data_quality)
 ```
 
-```{r}
-# Logical Validation Metrics
+```{r logical validation, echo=FALSE}
+# Logical validation metrics
 validation_metrics <- yellow_s3_data |>
   summarize(
     total_trips = n(),
@@ -102,7 +104,7 @@ validation_metrics <- yellow_s3_data |>
 knitr::kable(validation_metrics)
 ```
 
-```{r}
+```{r edge cases, echo=FALSE}
 #Edge case documentation
 extreme_fares <- yellow_s3_data |>
   arrange(desc(total_amount)) |>
@@ -113,21 +115,20 @@ extreme_fares <- yellow_s3_data |>
 knitr::kable(extreme_fares)
 ```
 
-```{r}
-# Timing aggregation performance time with tictoc
+```{r runtime-testing, echo=FALSE}
+library(tictoc)
+# Start timer
 tic("Yearly Revenue Aggregation")
 
-perf_test <- taxi_data |>
-  group_by(year(pickup_datetime)) |>
+# Run the heavy Spark aggregation
+perf_test <- yellow_s3_data |>
+  group_by(year) |>
   summarize(total_rev = sum(total_amount, na.rm = TRUE)) |>
   collect()
 
-timer_results <- toc()
-```
-
-```{r}
-wd <- getwd()
-rmarkdown::render(paste0(wd,"/validation.Rmd"))
+# Save the timing result to a variable[cite: 1]
+timer_log <- toc(quiet = TRUE) 
+print(timer_log$callback_msg)
 ```
 
 
