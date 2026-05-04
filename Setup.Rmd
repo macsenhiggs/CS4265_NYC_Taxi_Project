@@ -121,12 +121,15 @@ if (!require(aws.s3)) install.packages("aws.s3") else message("S3 installed prev
 if (!require(sparklyr)) install.packages("sparklyr") else message("SparklyR installed previously.")
 if (!require(dplyr)) install.packages("dplyr") else message("dplyr installed previously.")
 if (!require(DBI)) install.packages("DBI") else message("DBI installed previously.")
+if (!require(tictoc)) install.packages("tictoc") else message("tictoc installed previously.")
+
 
 
 library(aws.s3)
 library(sparklyr)
 library(dplyr)
 library(DBI)
+library(tictoc)
 message("Libraries successfully instantiated.")
 ```
 
