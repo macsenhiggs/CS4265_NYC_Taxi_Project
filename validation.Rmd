@@ -8,7 +8,7 @@ output:
 ```{r setup, include=FALSE}
 # include=FALSE prevents this setup code/warnings from showing in the final report
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
-
+knitr::opts_knit$set(root.dir = getwd())
 
 #Initialize Spark Session----
 if (exists("sc")) {
@@ -126,7 +126,8 @@ timer_results <- toc()
 ```
 
 ```{r}
-rmarkdown::render("docs/validation.Rmd")
+wd <- getwd()
+rmarkdown::render(paste0(wd,"/validation.Rmd"))
 ```
 
 
