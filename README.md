@@ -2,7 +2,7 @@
 
 **Course:** CS 4265\
 **Author:** Macsen Higgins\
-**README Last Updated:** May 3, 2026
+**README Last Updated:** May 4, 2026
 
 ## Project Description
 
@@ -34,6 +34,10 @@ While `getParquets.py` and `yellow_parquets_to_s3.Rmd` encompass the majority of
 2.  Run chunk 2, which will make an S3 bucket read request using the provided URI and create a Spark DataFrame in your local session from the parquet files contained within the bucket.
 3.  Upon the completion of chunk 2's processes, a preview of your DataFrame will print in the console, showing that the data was successfully obtained and that the schema of the different files have coalesced without error. The data is now ready for processing and deep analysis.
 
-## Final Steps
+## Using the Pipeline
 
 With the distributed DataFrame loaded into Spark, the user is now free to perform analysis as they see fit. An example has been provided at the end of `s3_to_spark.Rmd`, but the possibilities for investigative analysis are nearly endless. In future iterations of this project, I intend to further expand the practical analysis enabled by the pipeline and draw more meaningful conclusions about the shifting identity of the NYC taxi industry.
+
+## Data Validation
+
+The most recently run validation report can be found in /docs/validation.md. The results are derived from validation.Rmd, but as of 5/4/26 automation of markdown generation from the R notebook is still in progress.
