@@ -44,11 +44,9 @@ yellow_read_schema <- list(
 
 
 ```{r}
-#main directory (all files)
-#s3_file_directory <- "s3a://cs4265-nyc-taxi-project/data/yellow_split/"
 
-#directory for much smaller set of test files (proof of concept)
-s3_file_directory <- "s3a://cs4265-nyc-taxi-project/data/yellow_test/" 
+#S3 URI
+s3_file_directory <- "s3a://cs4265-nyc-taxi-project/data/yellow_data/" 
 
 yellow_s3_data <- spark_read_parquet(
   sc = sc,
@@ -58,16 +56,6 @@ yellow_s3_data <- spark_read_parquet(
   options = list(mergeSchema = "false"),
   memory = FALSE
 )
-
-#yellow_normalized <- yellow_s3_data |>
-#  mutate(
-#    # Ensure IDs are doubles (helpful for joins later)
-#    VendorID     = as.double(VendorID),
-#    PULocationID = as.double(PULocationID),
-#    DOLocationID = as.double(DOLocationID)
-#  )
-
-#print(yellow_s3_data)
 ```
 
 ```{r}

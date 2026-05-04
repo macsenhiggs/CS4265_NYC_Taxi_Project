@@ -16,7 +16,7 @@ if (exists("sc")) {
 conf <- spark_config()
 
 Sys.setenv("AWS_DEFAULT_REGION" = "us-east-1")
-bucketlist()
+#bucketlist()
 
 conf$spark.app.name <- "NYC Taxi"
 conf$spark.hadoop.fs.s3a.access.key <- Sys.getenv("AWS_ACCESS_KEY_ID")
@@ -33,30 +33,6 @@ conf$spark.driver.maxResultSize <- "4G"
 sc <- spark_connect(master = "local", version = "3.5.0", config = conf)
 ```
 
-```{r}
-yellow_schema <- list(
-  VendorID              = "integer64",
-  tpep_pickup_datetime  = "timestamp",
-  tpep_dropoff_datetime = "timestamp",
-  passenger_count       = "integer64",
-  trip_distance         = "double",
-  RatecodeID            = "integer64",
-  store_and_fwd_flag    = "character",
-  PULocationID          = "integer64",
-  DOLocationID          = "integer64",
-  payment_type          = "integer64",
-  fare_amount           = "double",
-  extra                 = "double",
-  mta_tax               = "double",
-  tip_amount            = "double",
-  tolls_amount          = "double",
-  improvement_surcharge = "double",
-  total_amount          = "double",
-  Airport_fee           = "double",
-  congestion_surcharge  = "double",
-  cbd_congestion_fee    = "double"
-)
-```
 
 ```{r}
 wd <- getwd()
@@ -80,7 +56,6 @@ for (i in seq_along(yellow_files)) {
     sc = sc,
     name = "current_chunk",
     path = paste0("file://", current_file),
-    #columns = yellow_schema,
     options = list(mergeSchema = "true"),
     memory = FALSE,
     overwrite = TRUE
